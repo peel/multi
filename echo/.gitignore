@@ -1,0 +1,7 @@
+target
+.project
+.classpath
+.settings
+.cache
+.ensime
+.ensime_cache

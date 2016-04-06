@@ -1,0 +1,20 @@
+* Running
+Start IEx session
+#+BEGIN_SRC
+iex --name "shell@127.0.0.1" --cookie "cookie" -S mix run --no-start
+#+END_SRC
+Run application
+#+BEGIN_SRC
+sbt "run-main Echo -m \"hello jinterface\" -p \"mbox\" -s \"echo@127.0.0.1\" -c \"cookie\""
+#+END_SRC
+Send message to Scala from Elixir
+#+BEGIN_SRC
+iex> Kernel.send({:mbox, :"echo@127.0.0.1"}, {self(), {:hello}})
+#+END_SRC
+You should see the echo server closed after the message was received. Now read the response.
+#+BEGIN_SRC
+iex> flush
+{:hello, 'and hello to you'}
+#+END_SRC
+
+
