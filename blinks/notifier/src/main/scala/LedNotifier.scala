@@ -21,74 +21,78 @@ object LedController {
 }
 
 class Server(node: ENode, mbox: EMbox) extends AbstractExecutionThreadService with LazyLogging{
-  def handle(tuple: ETuple): Unit = tuple.elementAt(0).asInstanceOf[EAtom].atomValue match {
-    case "stop" => stopAsync()
-    case "$gen_call" =>
-      println(s"received: $tuple")
-      logger.info(s"received $tuple")
-      handleCall(from=tuple.elementAt(1).asInstanceOf[ETuple],
-                 req=tuple.elementAt(2).asInstanceOf[ETuple])
-    case _ => throw new EDecodeException(s"Bad message: $tuple")
+
+  def handle(msg: ETuple): Unit = msg.elementAt(0).asInstanceOf[EAtom].atomValue match {
+    //{$gen_cast, {<MESSAGE>}}
+    case "$gen_cast" => handleCast(msg.elementAt(1).asInstanceOf[ETuple])
+    //{$gen_call, {Pid, Ref}, {<MESSAGE>}}
+    case "$gen_call" => handleCall(msg=msg.elementAt(2).asInstanceOf[ETuple],sender=msg.elementAt(1).asInstanceOf[ETuple])
+    case _ => stopAsync()
   }
 
-  def handleCall(from: ETuple, req: ETuple): Unit = req.elementAt(0).asInstanceOf[EAtom].atomValue match {
-    case "pid" => reply(from, mbox.self())
-    case "blinkSay" => reply(from, new EString(LedController.blinkSay))
-    case _ => throw new EDecodeException(s"Bad message: $req")
+  def handleCall(msg: ETuple, sender: ETuple): Unit = msg.elementAt(0).asInstanceOf[EAtom].atomValue match {
+    //{$gen_call, {Pid, Ref}, {:pid}} -> {Pid, {Ref, {:pid, self()}}}
+    //            ^ FROM      ^ MSG
+    case "pid" => mbox.send(sender.elementAt(0).asInstanceOf[EPid],
+                            new ETuple(Array(sender.elementAt(1),
+                                             new ETuple(Array(msg.elementAt(0),
+                                                              mbox.self())))))
+    //{$gen_call, {Pid, Ref}, {:say}} -> {Pid, {Ref, {:say, <MESSSAGE>}}}
+    //            ^ FROM      ^ MSG
+    case "say" => send(sender, new ETuple(Array(sender.elementAt(1),
+                                                 new ETuple(Array(msg.elementAt(0),
+                                                 new EString(LedController.blinkSay))))))
+    case _ => throw new EDecodeException(s"Bad message format: $msg")
   }
 
-  def handleCast(from: ETuple, req: ETuple): Unit = messageName(req) match {
+  def handleCast(msg: ETuple): Unit = messageType(msg) match {
+    //{$gen_cast, {:blink}}
     case "blink" => LedController.blink
+    case _ => throw new EDecodeException(s"Bad message format: $msg")
   }
 
-  def messageName(tuple: ETuple): String  = tuple.elementAt(0).asInstanceOf[EAtom].atomValue
-  def reply(from: ETuple, response: EObject): Unit = {
-    mbox.send(from.elementAt(0).asInstanceOf[EPid], new ETuple(Array(from.elementAt(1), response)))
-  }
+  def messageType(msg: ETuple): String  = msg.elementAt(0).asInstanceOf[EAtom].atomValue
+  def send(to: ETuple, message: EObject): Unit = mbox.send(to.elementAt(0).asInstanceOf[EPid], message)
 
-  override def run(): Unit = {
-    while(isRunning()){
-      Try(handle(mbox.receive().asInstanceOf[ETuple])) match {
-        case Success(s) => s
-        case Failure(e) =>
-          logger.error(e.getMessage)
-          logger.info("Unrecongised message, ignoring.")
-      }
+  override def run(): Unit = while(isRunning()){
+    mbox.receive() match {
+      case m: ETuple => handle(m)
+      case _ =>
+        println("Invalid call")
+        System.exit(-1)
     }
   }
+
   override def shutDown(): Unit = {
     mbox.close()
     node.close()
   }
 }
 
-case class Config(enode: String = "no@nohost", cookie: String = "empty", self: String = "__manager__no@nohost", procName: String = "manager_java_server")
+case class Config(processName: String = "mbox", selfAddr: String = "echo@127.0.0.1", cookie: String = "cookie" )
 
 object Config{
-  val parser = new scopt.OptionParser[Config]("led-notify-scala"){
-    head("rpi led notifier", "1.x")
-    opt[String]('n',"enode") required() valueName("<some@host>") action{ (x,c) =>
-      c.copy(enode=x) } text("Erlang node")
-    opt[String]('s',"self") required() valueName("<__manager__some@host>") action{ (x,c) =>
-      c.copy(self=x) } text("Erlang node cookie")
-    opt[String]('c',"cookie") required() valueName("<node-cookie>") action{ (x,c) =>
+  val parser = new scopt.OptionParser[Config]("echo"){
+    head("echo", "1.x")
+    opt[String]('p',"process-name") required() valueName("<mbox>") action{ (x,c) =>
+      c.copy(processName=x) } text("Java application process name")
+    opt[String]('s',"self-name") required() valueName("<echo@localhost>") action{ (x,c) =>
+      c.copy(selfAddr=x) } text("Java node name")
+    opt[String]('c',"cookie") required() valueName("<cookie>") action{ (x,c) =>
       c.copy(cookie=x) } required() text("Erlang node cookie")
-    opt[String]('p',"procName") required() valueName("manager_java_server") action{ (x,c) =>
-      c.copy(procName=x) } text("Registered proc name")
   }
 }
 object LedNotifier extends App {
   import Config.parser
 
   parser.parse(args, Config()) match {
-    case Some(config) =>
-      (for {
-          s <- Try(new ENode("__blinks_blinks@127.0.0.1", "monster"))
-          m <- Try(s.createMbox("blinks_java_server"))
-        } yield new Server(s, m)).map(_.startAsync().awaitRunning()) match {
-          case Success(_) => println("READY")
-          case Failure(err) => println(s"Server failed to start with message:\n\t$err.getMessage\nProbably you did not start the epmd. Java nodes don't start epmd on their own as erlang nodes do.")
-        }
+    case Some(config) => (for{
+      s <- Try(new ENode(config.selfAddr, config.cookie))
+      m <- Try(s.createMbox(config.processName))
+    } yield new Server(s, m)).map(_.startAsync().awaitRunning()) match {
+        case Success(_) => println("READY")
+        case Failure(err) => println(s"Server failed to start with message:\n\t$err.getMessage\nProbably you did not start the epmd. Java nodes don't start epmd on their own as erlang nodes do.")
+      }
     case None =>
       println("Invalid startup parameters")
       System.exit(-1)

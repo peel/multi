@@ -1,0 +1,43 @@
+* Running w/o monitoring
+Start IEx session
+#+BEGIN_SRC
+iex --name "shell@127.0.0.1" --cookie "cookie" -S mix run --no-start
+#+END_SRC
+Run application
+#+BEGIN_SRC
+sbt -DOtpConnection.trace=3 "run-main LedNotifier -p \"mbox\" -s \"echo@127.0.0.1\" -c \"cookie\""
+#+END_SRC
+Send message to Scala from Elixir
+#+BEGIN_SRC
+iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
+iex> {:say, 'blink'}
+#+END_SRC
+Send message to Scala from Elixir that crashes the server
+#+BEGIN_SRC
+iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:die})
+iex> ** (exit) exited in: GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say}, 5000)
+iex> ** (EXIT) no connection to echo@127.0.0.1
+iex>    (elixir) lib/gen_server.ex:564: GenServer.call/3
+#+END_SRC
+Run the service with monitoring
+#+BEGIN_SRC
+iex> Application.ensure_all_started(:blinks)
+#+END_SRC
+Send message to Scala from Elixir
+#+BEGIN_SRC
+iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
+iex> {:say, 'blink'}
+#+END_SRC
+Send message to Scala from Elixir that crashes the server
+#+BEGIN_SRC
+iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:die})
+iex> ** (exit) exited in: GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say}, 5000)
+iex> ** (EXIT) no connection to echo@127.0.0.1
+iex>    (elixir) lib/gen_server.ex:564: GenServer.call/3
+#+END_SRC
+Send message to Scala from Elixir again
+#+BEGIN_SRC
+iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
+iex> {:say, 'blink'}
+#+END_SRC
+

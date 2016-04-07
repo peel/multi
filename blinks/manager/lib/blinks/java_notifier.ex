@@ -20,12 +20,8 @@ defmodule Blinks.JavaNotifier do
     java_node = "__blinks__" <> self_node
     cookie = Node.get_cookie()
     jarfile = :code.priv_dir(:blinks) ++ '/led-notifier.jar'
-    jvm_args = ['-jar', jarfile, '-s', self_node, '-n', java_node, '-c', cookie, '-p', @registered_proc_name]
-    port = Port.open(
-      {:spawn_executable, exec},
-      [{:line, 1000},
-        :stderr_to_stdout,
-        {:args, jvm_args}])
+    jvm_args = ['-jar', jarfile, '-s', java_node, '-c', cookie, '-p', @registered_proc_name]
+    port = Port.open({:spawn_executable, exec},[{:line, 1000},:stderr_to_stdout,{:args, jvm_args}])
     state = Kernel.struct(__MODULE__, [node: String.to_atom(java_node), port: port])
     sync_with_java_startup(state)
   end
@@ -35,11 +31,16 @@ defmodule Blinks.JavaNotifier do
     receive do
       {^port, {:data, {:eol, 'READY'}}} ->
         Logger.info("Successfully started Java server process.")
-        {_, pid} = GenServer.call({@registered_proc_name, state.node}, {:pid})
-        true = Process.link(pid)
-        Logger.info("Java server now linked.")
-        true = Node.monitor(state.node, true)
-        {:ok, state}
+        Kernel.send({@registered_proc_name, state.node}, {:pid})
+        receive do
+          {_, pid} ->
+            true = Process.link(pid)
+            Logger.info("Java server now linked.")
+            true = Node.monitor(state.node, true)
+            {:ok, state}
+          msg ->
+            {:stop, msg}
+        end
       {^port, {:data, {:eol, stdout}}} ->
         {:stop, stdout}
       msg ->
