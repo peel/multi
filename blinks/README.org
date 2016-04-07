@@ -19,7 +19,7 @@ iex> ** (exit) exited in: GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say}, 500
 iex> ** (EXIT) no connection to echo@127.0.0.1
 iex>    (elixir) lib/gen_server.ex:564: GenServer.call/3
 #+END_SRC
-Run the service with monitoring
+* Run the service with monitoring
 #+BEGIN_SRC
 iex> Application.ensure_all_started(:blinks)
 #+END_SRC

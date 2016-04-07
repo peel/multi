@@ -31,16 +31,11 @@ defmodule Blinks.JavaNotifier do
     receive do
       {^port, {:data, {:eol, 'READY'}}} ->
         Logger.info("Successfully started Java server process.")
-        Kernel.send({@registered_proc_name, state.node}, {:pid})
-        receive do
-          {_, pid} ->
-            true = Process.link(pid)
-            Logger.info("Java server now linked.")
-            true = Node.monitor(state.node, true)
-            {:ok, state}
-          msg ->
-            {:stop, msg}
-        end
+        {_, pid} = GenServer.call({@registered_proc_name, state.node}, {:pid})
+        true = Process.link(pid)
+        Logger.info("Java server now linked.")
+        true = Node.monitor(state.node, true)
+        {:ok, state}
       {^port, {:data, {:eol, stdout}}} ->
         {:stop, stdout}
       msg ->
