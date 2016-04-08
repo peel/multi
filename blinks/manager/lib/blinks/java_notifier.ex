@@ -2,6 +2,14 @@ defmodule Blinks.JavaNotifier do
   use GenServer
   require Logger
 
+  def say(timeout \\ 5000) do
+    GenServer.call(state.node, {:say}, timeout)
+  end
+
+  def blink do
+    GenServer.cast(state.node, {:blink})
+  end
+
   defstruct node: nil, port: nil
   @type t :: %__MODULE__{node: String.t, port: port()}
 
