@@ -40,4 +40,16 @@ Send message to Scala from Elixir again
 iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
 iex> {:say, 'blink'}
 #+END_SRC
-
+* Run JavaScript service
+#+BEGIN_SRC
+iex> Blinks.JsNotifier.start_link([])
+#+END_SRC
+Send message to JS from Elixir
+#+BEGIN_SRC
+iex> GenServer.call Blinks.JsNotifier, :say
+iex> "not blinked" 
+#+END_SRC
+Send message to Scala from Elixir that crashes the server
+#+BEGIN_SRC
+iex> GenServer.cast Blinks.JsNotifier, :blink
+#+END_SRC

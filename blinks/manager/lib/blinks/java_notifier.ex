@@ -1,4 +1,5 @@
 defmodule Blinks.JavaNotifier do
+  use GenServer
   require Logger
 
   defstruct node: nil, port: nil
@@ -7,7 +8,7 @@ defmodule Blinks.JavaNotifier do
   @registered_proc_name :blinks_java_server
 
   def start_link(args) do
-    GenServer.start_link(__MODULE__, args, [])
+    GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
   def init(args), do: init(args, System.find_executable("java"))

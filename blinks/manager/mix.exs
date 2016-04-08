@@ -13,6 +13,7 @@ defmodule Blinks.Mixfile do
   def application do
     [applications: [:logger],
      env: [notifier: [],
+           js_notifier: [],
            jvm_args: ["-Xms512m","-Xmx1024m"]],
      mod: {Blinks, []}]
   end
