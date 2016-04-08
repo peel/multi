@@ -8,14 +8,11 @@ function handler(term, from, state, done) {
 }
 
 function blink(){
-
   var NUM_LEDS = parseInt(process.argv[2], 10) || 8,
       pixelData = new Uint32Array(NUM_LEDS);
-
   var brightness = 128;
 
   ws281x.init(NUM_LEDS);
-
 
   var lightsOff = function () {
     for (var i = 0; i < NUM_LEDS; i++) {
@@ -25,35 +22,21 @@ function blink(){
     ws281x.reset();
   };
 
-  var signals = {
-    'SIGINT': 2,
-    'SIGTERM': 15
-  };
-
-  function shutdown(signal, value) {
-    console.log('Stopped by ' + signal);
-    lightsOff();
-    process.nextTick(function () { process.exit(0); });
-  }
-
-  Object.keys(signals).forEach(function (signal) {
-    process.on(signal, function () {
-      shutdown(signal, signals[signal]);
-    });
-  });
-
   // ---- animation-loop
   var offset = 0;
-  setInterval(function () {
-    for (var i = 0; i < NUM_LEDS; i++) {
-      pixelData[i] = wheel(((i * 256 / NUM_LEDS) + offset) % 256);
-    }
+  var times = 0;
+  var animation = setInterval(function () {
+      for (var i = 0; i < NUM_LEDS; i++) {
+          pixelData[i] = wheel(((i * 256 / NUM_LEDS) + offset) % 256);
+      }
 
-    offset = (offset + 1) % 256;
-    ws281x.render(pixelData);
+      offset = (offset + 1) % 256;
+      ws281x.render(pixelData);
+      if (++times === 64) {
+          clearInterval(animation);
+          lightsOff();
+      }
   }, 1000 / 30);
-
-  console.log('Rainbow started. Press <ctrl>+C to exit.');
 
   // generate rainbow colors accross 0-255 positions.
   function wheel(pos) {
@@ -70,7 +53,6 @@ function blink(){
     b = b * brightness / 255;
     return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
   }
-  return "blinked";
 }
 
 erlastic.server(handler);

@@ -1,5 +1,5 @@
 # Pull base image
-FROM resin/rpi-raspbian:jessie
+FROM ericvh/arm64-ubuntu
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,7 +14,6 @@ RUN git clone https://github.com/hardkernel/wiringPi.git /tmp/wiringc1 &&\
     cd /tmp/wiringc1 &&\
     make install &&\
     rm -rf /tmp/wiringc1
-
 
 # Define working directory
 WORKDIR /data
