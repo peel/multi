@@ -1,24 +1,8 @@
 import scala.util.{Failure, Success, Try}
 
-import Gpio.leds
 import com.ericsson.otp.erlang.{OtpErlangAtom => EAtom, OtpErlangDecodeException => EDecodeException, OtpErlangObject => EObject, OtpErlangPid => EPid, OtpErlangString => EString, OtpErlangTuple => ETuple, OtpMbox => EMbox, OtpNode => ENode}
 import com.google.common.util.concurrent.AbstractExecutionThreadService
-import com.pi4j.io.gpio.GpioPinDigitalOutput
-import com.pi4j.io.gpio.PinState.{LOW => OFF, HIGH => ON}
 import com.typesafe.scalalogging.LazyLogging
-
-object LedController {
-  def blinkSay: String = "blink"
-  def blink: Unit = {
-    leds.foreach(_.on)
-    Thread.sleep(2000)
-    leds.foreach(_.off)
-  }
-  implicit class Led(gpioController: GpioPinDigitalOutput) {
-    def on = gpioController.setState(ON)
-    def off = gpioController.setState(OFF)
-  }
-}
 
 class Server(node: ENode, mbox: EMbox) extends AbstractExecutionThreadService with LazyLogging{
 
@@ -69,7 +53,7 @@ class Server(node: ENode, mbox: EMbox) extends AbstractExecutionThreadService wi
   }
 }
 
-case class Config(processName: String = "mbox", selfAddr: String = "echo@127.0.0.1", cookie: String = "cookie" )
+case class Config(processName: String = "mbox", selfAddr: String = "echo@127.0.0.1", cookie: String = "cookie", test: Boolean = false)
 
 object Config{
   val parser = new scopt.OptionParser[Config]("echo"){
@@ -80,12 +64,14 @@ object Config{
       c.copy(selfAddr=x) } text("Java node name")
     opt[String]('c',"cookie") required() valueName("<cookie>") action{ (x,c) =>
       c.copy(cookie=x) } required() text("Erlang node cookie")
-  }
+    cmd("blink") hidden() action { (_, c) =>
+      c.copy(test = true) } text("test leds w/o running a server") }
 }
 object LedNotifier extends App {
   import Config.parser
 
   parser.parse(args, Config()) match {
+    case Some(config) if config.test => LedController.blink
     case Some(config) => (for{
       s <- Try(new ENode(config.selfAddr, config.cookie))
       m <- Try(s.createMbox(config.processName))
