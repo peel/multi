@@ -1,7 +1,7 @@
 var erlastic = require('node_erlastic');
 var ws281x = require('rpi-ws281x-native');
 
-function handler(term, from, state, done) {
+function handle(term, from, state, done) {
     if (term == "blink") return done("noreply",blink());
     if (term == "say") return done("reply","not blinked");
     throw new Error("unexpected request");
@@ -55,4 +55,4 @@ function blink(){
   }
 }
 
-erlastic.server(handler);
+erlastic.server(handle);
