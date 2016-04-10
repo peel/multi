@@ -9,7 +9,7 @@ sbt -DOtpConnection.trace=3 "run-main LedNotifier -p \"mbox\" -s \"echo@127.0.0.
 #+END_SRC
 Send message to Scala from Elixir
 #+BEGIN_SRC
-iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
+iex> {_, msg} = GenServer.cast({:mbox, :"echo@127.0.0.1"}, {:blink})
 iex> {:say, 'blink'}
 #+END_SRC
 Send message to Scala from Elixir that crashes the server
@@ -20,24 +20,26 @@ iex> ** (EXIT) no connection to echo@127.0.0.1
 iex>    (elixir) lib/gen_server.ex:564: GenServer.call/3
 #+END_SRC
 * Run the service with monitoring
+Start IEx session
+#+BEGIN_SRC
+iex --name "shell@127.0.0.1" --cookie "cookie" -S mix run --no-start
+#+END_SRC
+Start appications
 #+BEGIN_SRC
 iex> Application.ensure_all_started(:blinks)
 #+END_SRC
 Send message to Scala from Elixir
 #+BEGIN_SRC
-iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
-iex> {:say, 'blink'}
+iex> GenServer.cast({:blinks_java_server, :"__blinks__shell@127.0.0.1"}, {:blink})
 #+END_SRC
-Send message to Scala from Elixir that crashes the server
+Kill Scala process
 #+BEGIN_SRC
-iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:die})
-iex> ** (exit) exited in: GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say}, 5000)
-iex> ** (EXIT) no connection to echo@127.0.0.1
-iex>    (elixir) lib/gen_server.ex:564: GenServer.call/3
+kill $(ps aux | grep notifier | awk '{print $2}')
 #+END_SRC
+Get pocess restarted messages...
 Send message to Scala from Elixir again
 #+BEGIN_SRC
-iex> {_, msg} = GenServer.call({:mbox, :"echo@127.0.0.1"}, {:say})
+iex> {_, msg} = GenServer.call({blinks_java_server, :"echo@127.0.0.1"}, {:say})
 iex> {:say, 'blink'}
 #+END_SRC
 * Run JavaScript service
@@ -58,9 +60,13 @@ Check ip addresses:
 #+BEGIN_SRC
 $ ansible all -K -in inventory_int -a "ip ad"
 #+END_SRC
+Set inet addresses
+#+BEGIN_SRC
+$ export INET2=10.0.1.189 && export INET3=10.0.1.250
+#+END_SRC
 On machine w/ WS2182B LEDs (ie. hell2.local) start app w/o running anything:
 #+BEGIN_SRC
-$ iex --name "shell@<<IP ADDRESS>>" --cookie "cookie" -S mix run --no-start
+$ iex --name "shell@${INET2}" --cookie "cookie" -S mix run --no-start
 #+END_SRC
 Verify no running processes
 #+BEGIN_SRC
@@ -69,15 +75,15 @@ $ ps aux | grep node
 #+END_SRC
 On machine w/ RGB LED (ie. hell3.local) start app normally
 #+BEGIN_SRC
-$ iex --name "shell@<<IP ADDRESS2>>" --cookie "cookie" -S mix run
+$ iex --name "shell@${INET3}" --cookie "cookie" -S mix run
 #+END_SRC
 Verify if you can connect to the remote node
 #+BEGIN_SRC
-iex> Node.ping :"shell@<<IP ADDRESS>>"
+iex> Node.ping :"shell@${INET2}"
 #+END_SRC
 Start Node.js process on a remote node
 #+BEGIN_SRC
-iex> pid = Node.spawn_link :"shell@10.0.1.189", fn -> Blinks.JsNotifier.start end
+iex> pid = Node.spawn_link :"shell@${INET2}", fn -> Blinks.JsNotifier.start end
 #+END_SRC
 On machine 1 verify if process is running
 #+BEGIN_SRC
@@ -85,7 +91,7 @@ $ ps aux | grep node
 #+END_SRC
 Call machine 2 from machine 2 to blink
 #+BEGIN_SRC
-iex> GenServer.cast({Blinks.JsNotifier, :"shell@10.0.1.189"}, :blink)
+iex> GenServer.cast({Blinks.JsNotifier, :"shell@${INET2}"}, :blink)
 #+END_SRC
 
 

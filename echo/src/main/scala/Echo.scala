@@ -1,15 +1,15 @@
 import scala.util.{Failure, Success, Try}
 
 import com.ericsson.otp.erlang.{
+  OtpMbox => EMbox,
+  OtpNode => ENode,
   OtpEpmd,
   OtpErlangAtom => EAtom,
   OtpErlangDecodeException => EDecodeException,
   OtpErlangObject => EObject,
   OtpErlangPid => EPid,
   OtpErlangString => EString,
-  OtpErlangTuple => ETuple,
-  OtpMbox => EMbox,
-  OtpNode => ENode
+  OtpErlangTuple => ETuple
 }
 
 case class Config(msg: String = "echo", processName: String = "mbox", selfAddr: String = "echo@127.0.0.1", cookie: String = "cookie" )
