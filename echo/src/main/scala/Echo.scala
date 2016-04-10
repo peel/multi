@@ -1,6 +1,16 @@
 import scala.util.{Failure, Success, Try}
 
-import com.ericsson.otp.erlang.{OtpEpmd, OtpErlangAtom => EAtom, OtpErlangDecodeException => EDecodeException, OtpErlangObject => EObject, OtpErlangPid => EPid, OtpErlangString => EString, OtpErlangTuple => ETuple, OtpMbox => EMbox, OtpNode => ENode}
+import com.ericsson.otp.erlang.{
+  OtpEpmd,
+  OtpErlangAtom => EAtom,
+  OtpErlangDecodeException => EDecodeException,
+  OtpErlangObject => EObject,
+  OtpErlangPid => EPid,
+  OtpErlangString => EString,
+  OtpErlangTuple => ETuple,
+  OtpMbox => EMbox,
+  OtpNode => ENode
+}
 
 case class Config(msg: String = "echo", processName: String = "mbox", selfAddr: String = "echo@127.0.0.1", cookie: String = "cookie" )
 
@@ -19,8 +29,6 @@ object Config{
 }
 object Echo extends App {
   import Config.parser
-  private val ECHO_MSG_TYPE = "echo"
-  private val STOP_MSG_TYPE = "stop"
 
   parser.parse(args, Config()) match {
     case Some(config) => for{
@@ -28,7 +36,6 @@ object Echo extends App {
         m <- Try(s.createMbox(config.processName))
       } yield {
         Try(m.receive().asInstanceOf[ETuple]).map{msg =>
-          println(msg)
           msg.elementAt(1).asInstanceOf[ETuple].elementAt(0).asInstanceOf[EAtom].atomValue match {
             case "stop" => System.exit(0)
             case _ => m.send(msg.elementAt(0).asInstanceOf[EPid], new ETuple(Array(msg.elementAt(1).asInstanceOf[ETuple].elementAt(0), new EString("and hello to you"))))

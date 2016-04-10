@@ -7,6 +7,7 @@
 ******* polyglot dev, architect maybe probably
 **** I should've been talking about Erlang, JVM, Ports, Interfaces, integration and most likely EPMD
 That's strictly business and I'm about to 
+[[./img/goat.jpg]]
 * Start with a... goat
 ** Still that's not a usual goat
 It's a CAP (spelled C-A-P). An old-male goat... well not the like gran calls the pop when he's not taking the rubbish, still a CAP.
@@ -54,7 +55,7 @@ Java <> C
 **** Java representation of the Erlang data types
 *** Demo - Echo Server
 ** Connecting nodes
- Advanced Demo
+Advanced Demo
 *** Connecting makes nodes monitor each other
 they can tell when connection is dropped
 *** Connecting new node to existing node in a group connects it to all nodes in the group
