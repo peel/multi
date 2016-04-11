@@ -66,7 +66,7 @@ $ export INET2=10.0.1.189 && export INET3=10.0.1.250
 #+END_SRC
 On machine w/ WS2182B LEDs (ie. hell2.local) start app w/o running anything:
 #+BEGIN_SRC
-$ iex --name "shell@${INET2}" --cookie "cookie" -S mix run --no-start
+$ iex --name "shell@10.0.189" --cookie "cookie" -S mix run --no-start
 #+END_SRC
 Verify no running processes
 #+BEGIN_SRC
@@ -75,15 +75,15 @@ $ ps aux | grep node
 #+END_SRC
 On machine w/ RGB LED (ie. hell3.local) start app normally
 #+BEGIN_SRC
-$ iex --name "shell@${INET3}" --cookie "cookie" -S mix run
+$ iex --name "shell@10.0.1.250" --cookie "cookie" -S mix run
 #+END_SRC
 Verify if you can connect to the remote node
 #+BEGIN_SRC
-iex> Node.ping :"shell@${INET2}"
+iex> Node.ping :"shell@10.0.1.189"
 #+END_SRC
 Start Node.js process on a remote node
 #+BEGIN_SRC
-iex> pid = Node.spawn_link :"shell@${INET2}", fn -> Blinks.JsNotifier.start end
+iex> pid = Node.spawn_link :"shell@10.0.1.189", fn -> Blinks.JsNotifier.start end
 #+END_SRC
 On machine 1 verify if process is running
 #+BEGIN_SRC
@@ -91,9 +91,5 @@ $ ps aux | grep node
 #+END_SRC
 Call machine 2 from machine 2 to blink
 #+BEGIN_SRC
-iex> GenServer.cast({Blinks.JsNotifier, :"shell@${INET2}"}, :blink)
+iex> GenServer.cast({Blinks.JsNotifier, :"shell@10.0.1.189"}, :blink)
 #+END_SRC
-
-
-
-
