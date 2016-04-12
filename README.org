@@ -1,68 +1,10 @@
-* Introduction
-** Presentation choice
-**** Topic
-**** Description
-**** Possibly author's background
-***** And for those who didn't
-******* polyglot dev, architect maybe probably
-**** I should've been talking about Erlang, JVM, Ports, Interfaces, integration and most likely EPMD
-That's strictly business and I'm about to 
-[[./img/goat.jpg]]
-* Start with a... goat
-** Still that's not a usual goat
-It's a CAP (spelled C-A-P). An old-male goat... well not the like gran calls the pop when he's not taking the rubbish, still a CAP.
-** An acronym
-Constistency, Availability, Partition Tolerance
-*** Example
-**** Running a set of nodes, transferring money
-**** One derails, starts living on its own
-**** Reconnects, balance is off
-**** Isn't it possible to keep correct, available during a netsplit? NO.
-*** Consistency
-**** State accross the system nodes is the same all the time
-**** Can't modify same block of data at the same time
-**** Usually achieved by adding transactions
-*** Availability
-**** Asking for data means getting a response; a proper one
-*** Partition Tolerance
-**** tricky part
-**** system can keep on working even when parts of it can't commuicate
-**** can keep on working w/ messages possibly lost
-** CAP says you can only have 2
-Until someone invents networking HW that does not netsplit
-* Microservices vs Erlang
-emojis
-every sufficiently advanced application implements a complex buggy subset of Erlang
-* Distributed Erlang
-** Idea
-*** Like almost every Erlang feature, the distributed layer was added in order to provide fault tolerance.
-*** Built to run, even on remote telecom switches in the depths of woods. Where you'd rather not go.
-*** Soft running on a single machine is at risk of the machine dying
-** Nodes
-*** A node is an instance of Erlang VM
-*** 50 instances on a machine, 50 machines with 1 instances
-** EPMD
-*** Starting a node connects it to EPMD - Erlang Port Mapping Daemon
-*** EPMD runs as additional app started on each host
-*** Acts as a nameserver
-** JInterface
-*** We've been primarily JVM-based
-*** Set of tools for
-**** communication with Erlang processes and
-Erlang <> Java
-Java <> Java
-Java <> C
-**** Java representation of the Erlang data types
-*** Demo - Echo Server
-** Connecting nodes
-Advanced Demo
-*** Connecting makes nodes monitor each other
-they can tell when connection is dropped
-*** Connecting new node to existing node in a group connects it to all nodes in the group
-*** And the nodes can start sending messages
-*** Hidden nodes
-Do not connect to group when connecting to a node
-* Summary 
-** Does not solve all the issues
-Fallacies of distributed software development - Aron Rotem-Gal-Oz
-** Tools, practices, years of production experience
+* Multi{ Platform, Paradigm } Programming
+Source repository for a talk.
+
+** Description
+#+INCLUDE: https://github.com/peel/talks/blob/master/talks-multiplatform.org :minlevel 1
+See [[https://github.com/peel/talks/blob/master/talks-multiplatform.org][source]].
+
+** Running examples
+*** [[https://github.com/peel/multi/blob/master/echo/README.org][Echo]]
+*** [[https://github.com/peel/multi/blob/master/blinks/README.org][Blinks]]
